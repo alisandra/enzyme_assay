@@ -1,2 +1,2 @@
 # enzyme_assay
-R-package for the normalization of enzyme assays
+R-package for finding the maximum slope in enzyme assays
