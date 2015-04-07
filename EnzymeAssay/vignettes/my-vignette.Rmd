@@ -9,10 +9,16 @@ vignette: >
   \usepackage[utf8]{inputenc}
 ---
 
-The goal of the EnzymeAssay package is to facilitate enzyme assay data analysis, curation and quality control. Specifically, the package was designed for the colorimetric assays commonly used in the Institute of Plant Biochemistry, Heinrich-Heine University, Duesseldorf. However, it should work for any assay where either the substrate or the product can be measured over time, and the region of maximum slope is most desirable for estimating activity.
-```{r}
+The goal of the EnzymeAssay package is to facilitate enzyme assay data analysis, curation and quality control. The idea being that blindly taking the initial slope is a less-than-optimal solution for determining enzyme activity, while manually plotting and range selecting in a spredsheet program can be excedingly tedious. Specifically, the package was designed for the colorimetric assays commonly used in the Institute of Plant Biochemistry, Heinrich-Heine University, Duesseldorf (http://www.plant-biochemistry.hhu.de/). However, it should work for any assay where either the substrate or the product can be measured over time, and the region of maximum slope is most desirable for estimating activity. Source code available at (https://github.com/alisandra/enzyme_assay).
+
+```{r, install, eval=FALSE}
+# to install and load package
+install.packages('path/to/EnzymeAssay', repos = NULL, type = "source")
+```
+```{r, load}
 library(EnzymeAssay)
 ```
+
 ## Enzyme_Assay class
 
 The Enzyme_Assay class holds the assay data, and facilitates logical plotting and curation there of. The input required to make an Enzyme_Assay object is a matrix of assay measurements, with columns denoting different samples (wells) and rows corresponding to different measurement timepoints. Additionally, a vector of the relevant time points is required. 
@@ -36,7 +42,7 @@ Three more parameters affect how the constructor function finds ranges of maximu
 ## Plotting
 
 The Enzyme_Assay class has a specific method of the generic plot function, which produces a simple line plot with the ranges of maximum slope shown in bold. 
-```{r}
+```{r, include=FALSE}
 source('~/repos/enzyme_assay/EnzymeAssay/R/enzyme_assayClass.R')
 ```
 
@@ -81,6 +87,15 @@ eaCurated@curated_range  # retrieves associated curated ranges
 ```
 
 ## Import and Export 
-As this package is intended to be usable by begining R-users a quick on getting data in and out of R. R has functions to both read from, and wrote to the standard csv format. The read.csv
-> "He who ivs up [code] safety for [code] speed deserves neither."
-([via](https://twitter.com/hadleywickham/status/504368538874703872))
+As this package is intended to be usable by begining R-users, here is a quick note on getting data in and out of R. There are functions in R to both read from, and write to the standard csv format.
+
+```{r csv_examples, eval=FALSE}
+my_data <- read.csv('my_file.csv')  # basic import to data.frame (table)
+my_data <- read.csv('my_file.csv', row.names = 1)  # automatically names rows
+my_data <- read.csv2('my_file.csv')  # imports 'german' csv (';' separated, ',' for decimal)
+# read.csv2 can be quite helpful importing data from the old plate reader laptop
+
+write.csv(eaCurated@curated_slope, file="my_curated_slopes.csv")
+write.csv(eaCurated@curated_range, file="my_curated_ranges.csv")
+```
+
