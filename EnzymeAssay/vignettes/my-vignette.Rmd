@@ -1,0 +1,86 @@
+---
+title: "Vignette EnzymeAssay"
+author: "Alisandra Kaye Denton"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Vignette EnzymeAssay}
+  %\VignetteEngine{knitr::rmarkdown}
+  \usepackage[utf8]{inputenc}
+---
+
+The goal of the EnzymeAssay package is to facilitate enzyme assay data analysis, curation and quality control. Specifically, the package was designed for the colorimetric assays commonly used in the Institute of Plant Biochemistry, Heinrich-Heine University, Duesseldorf. However, it should work for any assay where either the substrate or the product can be measured over time, and the region of maximum slope is most desirable for estimating activity.
+```{r}
+library(EnzymeAssay)
+```
+## Enzyme_Assay class
+
+The Enzyme_Assay class holds the assay data, and facilitates logical plotting and curation there of. The input required to make an Enzyme_Assay object is a matrix of assay measurements, with columns denoting different samples (wells) and rows corresponding to different measurement timepoints. Additionally, a vector of the relevant time points is required. 
+
+```{r, basic_class}
+mini.data <- enzyme_assay.data[,1:24]  # subset of example assay data
+mini.data[1:6,1:6]
+head(enzyme_assay.time)  # example assay timepoints
+ea <- enzyme_assay(mini.data, enzyme_assay.time)  # constructor function
+```
+
+There are several input options. The package defaults to the time format exported by the plate reader ("H:MM:SS"). However, it converts this to and uses seconds internally; and also accepts seconds directly when the parameter `seconds = TRUE` is set.
+```{r}
+enzyme_assay.seconds <- plate_reader_seconds(enzyme_assay.time)
+head(enzyme_assay.seconds)
+ea <- enzyme_assay(mini.data, enzyme_assay.seconds, seconds=TRUE)
+```
+
+Three more parameters affect how the constructor function finds ranges of maximum slope. The parameter `windowsize` tells the function the width of ranges to consider (default = 8). The parameter `decreasing = TRUE` should be set if it is a decreasing assay; that is, if positive enzyme activity is measured by the rate of decrease in absorbance (or other abundance value). Finally, two methods are implemented: `method = "individual"` (default) calculates the range of maximum slope for each column independently, while `method = "together"` calculates the range of maximum average slope accross all assays. 
+
+## Plotting
+
+The Enzyme_Assay class has a specific method of the generic plot function, which produces a simple line plot with the ranges of maximum slope shown in bold. 
+```{r}
+source('~/repos/enzyme_assay/EnzymeAssay/R/enzyme_assayClass.R')
+```
+
+```{r}
+plot(ea)
+```
+
+The plot method accepts many standard plotting parameters, and one additional parameter `at_once` which indicates the number of lines per plot. This defaults to 12, as this is the width of a 96 well plate.
+
+## Curating
+
+An Enzyme_Assay object has two associated curation methods. In `enzyme_assay.curate` the lines are plotted as in the plot function, except that all but one is greyed out. The user is then prompted to enter `k` to keep curent value or enter a new value in seconds for both the start and stop of the range of the foreground line. This is repeated for every line, and the curated ranges are saved to the slot `@curated_range`. Entering `c` for cancel saves the automatically generated ranges with the changes included so far into the slot `@curated_range`. Unfortunately, no elegant resume method has been implemented, however, the user can restart the curation based on their previous curation using the parameter `status = "curated"`.
+
+```{r curate_method, eval=FALSE}
+eaCurated <- enzyme_assay.curate(ea)
+# to resume after canceling with 'c'
+eaRecurated <- enzyme_assay.curate(eaCurated, status = "curated")
+# this will start from the changes saved so far in eaCurated
+# the user may wish to keep pressing 'k' until reaching their previous spot
+```
+
+Sometimes a brief glance at the plot is sufficient to determine the changes that need to be made, or the user may prefer to record changes with a pen and paper or spreadsheet program. For all such cases the `enzyme_assay.curate_batch` function may be helpful. The user should
+take care that the ranges are stored as measurement index and not as seconds.
+
+```{r curate_batch_method}
+# retrieve the automatically determined ranges into a matrix
+ranges_under_curation <- ea@auto_range
+# modify, in this case, set the negative controls (in columns 10-12)
+# to match the range of column 1
+ranges_under_curation[,10:12] <- ranges_under_curation[,1]
+# add back to Enzyme_Assay object
+eaCurated <- enzyme_assay.curate_batch(ea, new_range = ranges_under_curation)
+```
+
+## Retrieving data
+No special methods have been implemented for the retrieval of data from the Enzyme_Assay class. Slots should be accessed directly by the `@` operator. 
+```{r retrieving_data, results = 'hide'}
+eaCurated@auto_slope  # retrieves automatically calculated slopes
+eaCurated@auto_range  # retrieves associated automatically calculated ranges
+eaCurated@curated_slope  # retrieves curated slopes
+eaCurated@curated_range  # retrieves associated curated ranges
+```
+
+## Import and Export 
+As this package is intended to be usable by begining R-users a quick on getting data in and out of R. R has functions to both read from, and wrote to the standard csv format. The read.csv
+> "He who ivs up [code] safety for [code] speed deserves neither."
+([via](https://twitter.com/hadleywickham/status/504368538874703872))
